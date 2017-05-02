@@ -9,13 +9,16 @@ EXPOSE      22
 # Volumes hold privates SFTP directories of each user and user/group/host credentials.
 VOLUME      ["/sftp-root", "/creds"]
 
+COPY        bin/* /usr/local/bin/
+
 # Install dependencies.
 RUN DEBIAN_FRONTEND=noninteractive \
     apt-get update && \
-    apt-get install -y --no-install-recommends openssh-server supervisor python3 ssmtp rsync inotify-tools openssl && \
+    apt-get install -y --no-install-recommends openssh-server supervisor python3 rsync inotify-tools openssl && \
     mkdir -p /var/run/sshd && \
     # The sftp group is for all SFTP users including sftpadmin.
-    groupadd sftp
+    groupadd sftp && \
+    chmod +x /usr/local/bin/*
 
 # Reconfigure sshd to use in-process SFTP server and chroot the sftp group.
 RUN sed -e 's|\(Subsystem sftp \).*|\1internal-sftp -l INFO|' -i /etc/ssh/sshd_config && \
@@ -34,7 +37,3 @@ CMD         ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/scrappysftp.c
 
 # Add configuration for supervisord
 COPY        supervisord.conf /etc/supervisor/conf.d/scrappysftp.conf
-
-# Add transfer log mailer daemon and utility scripts.
-COPY        bin/* /usr/local/bin/
-RUN         chmod +x /usr/local/bin/*
