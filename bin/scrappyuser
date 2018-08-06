@@ -33,6 +33,17 @@ if [ $? -eq 0 ]; then
     exit 1
 fi
 
+COUNTER=0
+while [ $COUNTER -lt 1 ]; do
+    getent passwd $UID_MINIMUM &>/dev/null
+
+    if [ $? -eq 2 ]; then
+        COUNTER=1
+    else
+        ((UID_MINIMUM++))
+    fi
+done
+
 SFTP_USER_HOME=$SFTP_ROOT$USERNAME
 SFTP_USER_DATA=$SFTP_USER_HOME$SFTP_DATA_DIR
 
