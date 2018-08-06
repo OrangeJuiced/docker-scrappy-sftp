@@ -6,9 +6,8 @@
 SFTP_ROOT='/sftp-root/'
 SFTP_GROUP='sftp'
 SFTP_DATA_DIR='/data'
-UID_MINIMUM=15000
 
-while getopts ":u:p:h" opt; do
+while getopts ":u:p:i:h" opt; do
     case "$opt" in
     u)
         USERNAME=$OPTARG
@@ -16,6 +15,9 @@ while getopts ":u:p:h" opt; do
     p)
         PASSWORD=$OPTARG
         ;;
+    i)
+        UID=$OPTARG
+        ;;        
     h)
         echo -e "Usage: scrappyuser -u <username> -p <password>"
         exit 0
@@ -33,17 +35,6 @@ if [ $? -eq 0 ]; then
     exit 1
 fi
 
-COUNTER=0
-while [ $COUNTER -lt 1 ]; do
-    getent passwd $UID_MINIMUM &>/dev/null
-
-    if [ $? -eq 2 ]; then
-        COUNTER=1
-    else
-        ((UID_MINIMUM++))
-    fi
-done
-
 SFTP_USER_HOME=$SFTP_ROOT$USERNAME
 SFTP_USER_DATA=$SFTP_USER_HOME$SFTP_DATA_DIR
 
@@ -59,7 +50,7 @@ function checkResponseCode() {
 mkdir -p $SFTP_USER_HOME
 checkResponseCode
 
-useradd -K UID_MIN=$UID_MINIMUM -m -d $SFTP_USER_HOME -s /bin/false -p $(openssl passwd -1 $PASSWORD) -G $SFTP_GROUP $USERNAME
+useradd -u $UID -m -d $SFTP_USER_HOME -s /bin/false -p $(openssl passwd -1 $PASSWORD) -G $SFTP_GROUP $USERNAME
 checkResponseCode
 
 # /sftp-root/username
